@@ -89,7 +89,7 @@ function SocketIOFile(socket, options) {
 	this.socket.on('socket.io-file::start', (data) => {
         let id = data.id;
         var uploadId = data.uploadId;
-		    let fileName = data.name;
+	    let fileName = data.name;
         let uploadDir;
         let uploadTo = data.uploadTo;
         let uploadData = data.data;
@@ -123,7 +123,7 @@ function SocketIOFile(socket, options) {
 
     		let stream = 0;
 
-        if(this.randomFileName) {
+        if(this.options.randomFileName) {
           do {
             file.fileName = generateRandomFileName(10);
           } while(fs.existsSync(`${uploadDir}/${file.fileName}`));
@@ -209,8 +209,9 @@ function SocketIOFile(socket, options) {
                 //console.log("\n========================= Upload Complete: " + id+':'+uploadId + " =========================\n");
 
                 fs.write(file.fd, file.data, null, 'Binary', (err, writen) => {
-                    const streamObj = {
-                        stream,
+		    fs.close(file.fd, (err) => {
+	            const streamObj = {
+       	                stream,
                         id,
                         uploadId,
                         name: fileName,
@@ -223,7 +224,7 @@ function SocketIOFile(socket, options) {
                     this.emit('complete', {
                         id,
                         uploadId,
-                        name: fileName,
+                        name: file.fileName,
                         size: file.size,
                         path: file.path,
                         uploadTo: file.uploadTo,
@@ -242,8 +243,8 @@ function SocketIOFile(socket, options) {
                     });
 
                     delete files[fileName];
+		    });
                 });
-                fs.close();
             }
             // on reaches buffer limit
             else if(files[fileName].data.length > MAX_BUFFER_SIZE) {
